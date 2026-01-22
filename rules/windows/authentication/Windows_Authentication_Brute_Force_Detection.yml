@@ -1,0 +1,31 @@
+title: Windows Failed Logon Event
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e5
+name: failed_logon
+description: Detects failed logon events on Windows systems.
+status: experimental
+logsource:
+  product: windows
+  service: security
+  category: logon
+detection:
+  selection:
+    EventID: 4625
+  condition: selection
+level: low
+---
+title: Multiple Failed Logons for a Single User (Possible Brute Force Attack)
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e6
+description: Detects multiple failed logons for the same user from the same source IP within a short timeframe, indicating a possible brute force attack.
+status: experimental
+correlation:
+  type: event_count
+  rules:
+    - failed_logon
+  group-by:
+    - TargetUserName
+    - TargetDomainName
+    - SourceNetworkAddress
+  timespan: 3m
+  condition:
+    gte: 4
+level: medium

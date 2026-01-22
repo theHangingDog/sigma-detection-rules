@@ -1,0 +1,51 @@
+title: VBScript Execution Spawning Powershell
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e7
+status: experimental
+description: Detects VBScript execution that spawns Powershell with bypass flags, simulating phishing attack chains
+author: Arkaprava Goswami
+references:
+  - https://attack.mitre.org/techniques/T1059/005/
+  - https://attack.mitre.org/techniques/T1059/001/
+tags:
+  - defense_evasion
+  - initial_access
+  - phishing
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  vbs_execution:
+    EventID: 1
+    Image|endswith:
+      - '\wscript.exe'
+      - '\cscript.exe'
+    CommandLine|contains:
+      - '.vbs'
+      - '.vbe'
+      - '.js'
+    CommandLine|contains|all:
+      - 'invoice'
+      - 'document'
+      - 'receipt'
+      - 'payment'
+  powershell_spawn:
+    EventID: 1
+    ParentImage|endswith:
+      - '\wscript.exe'
+      - '\cscript.exe'
+    Image|endswith:
+      - '\powershell.exe'
+    CommandLine|contains:
+      - '-ExecutionPolicy Bypass'
+      - '-ep bypass'
+      - '-Exec Bypass'
+      - 'Bypass'
+  condition: vbs_execution or powershell_spawn
+  timeframe: 5m
+falsepositives:
+  - Legitimate administrative scripts that use VBS to call PowerShell
+  - Software installation routines
+  - Developer tools and automation scripts
+  - Some system management utilities
+level: high

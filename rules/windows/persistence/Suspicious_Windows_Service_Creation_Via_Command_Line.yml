@@ -1,0 +1,72 @@
+title: Suspicious Windows Service Creation via Command Line
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e1
+status: experimental
+description: Detects suspicious Windows service creation via sc.exe or PowerShell with malicious indicators.
+author: Arkaprava Goswami
+references:
+  - https://attack.mitre.org/techniques/T1543/003/
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1543.003
+
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+
+detection:
+  sc_create_command:
+    EventID: 1
+    Image|endswith: '\sc.exe'
+    CommandLine|contains|all:
+      - 'create'
+      - 'binPath='
+    CommandLine|contains|any:
+      - '\Temp\'
+      - '\AppData\'
+      - '\Downloads\'
+      - '.vbs'
+      - '.js'
+      - '.ps1'
+      - 'http'
+
+  powershell_new_service:
+    EventID: 1
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains|all:
+      - 'New-Service'
+      - '-Name'
+    CommandLine|contains|any:
+      - '-BinaryPathName'
+      - 'http'
+      - '.ps1'
+
+  suspicious_parent_process:
+    EventID: 1
+    ParentImage|endswith|any:
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\winword.exe'
+      - '\excel.exe'
+      - '\powerpnt.exe'
+    Image|endswith: '\sc.exe'
+    CommandLine|contains: 'create'
+
+  service_network_binary:
+    EventID: 1
+    Image|endswith: '\sc.exe'
+    CommandLine|contains|any:
+      - 'powershell.*http'
+      - 'cmd.*/c.*curl'
+      - 'bitsadmin'
+      - 'certutil'
+
+condition: sc_create_command or powershell_new_service or suspicious_parent_process or service_network_binary
+
+falsepositives:
+  - Rare legitimate admin scripts
+  - Some enterprise deployment tools
+
+level: high

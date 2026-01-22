@@ -1,0 +1,21 @@
+title: Suspicious HH.exe Child Process
+id:  e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e2
+status: experimental
+description: Detects the Microsoft HTML Help executable (hh.exe) spawning a suspicious child process, indicating a possible malicious CHM file execution.
+author: Arkaprava Goswami
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        ParentImage|endswith:
+            - '\hh.exe'
+        Image|endswith:
+            - '\cmd.exe'
+            - '\powershell.exe'
+            - '\cscript.exe'
+            - '\wscript.exe'
+            - '\msedge.exe'
+            - '\regsvr32.exe'
+    condition: selection
+level: high

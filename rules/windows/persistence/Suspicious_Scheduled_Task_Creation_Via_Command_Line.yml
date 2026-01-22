@@ -1,0 +1,60 @@
+title: Suspicious Scheduled Task Creation via Command Line
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e2
+status: experimental
+description: Detects suspicious scheduled task creation via schtasks.exe, at.exe, or PowerShell with malicious indicators.
+author: Arkaprava Goswami
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+tags:
+  - attack.persistence
+  - attack.t1053.005
+  - attack.scheduled_task
+
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+
+detection:
+  schtasks_suspicious:
+    EventID: 1
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains|all:
+      - '/create'
+      - '/tn'
+      - '/tr'
+    CommandLine|contains|any:
+      - '\Temp\'
+      - '\AppData\'
+      - 'powershell'
+      - '.vbs'
+      - '.js'
+      - 'http'
+
+  powershell_schtasks:
+    EventID: 1
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains|all:
+      - 'Register-ScheduledTask'
+      - '-Action'
+    CommandLine|contains|any:
+      - 'New-ScheduledTaskAction'
+      - 'New-ScheduledTaskTrigger'
+
+  task_xml_creation:
+    EventID: 11
+    TargetFilename|endswith: '.xml'
+    TargetFilename|contains|any:
+      - '\Windows\Tasks\'
+      - '\Windows\System32\Tasks\'
+    Image|endswith:
+      - '\schtasks.exe'
+      - '\powershell.exe'
+
+condition: schtasks_suspicious or at_command or powershell_schtasks or task_xml_creation
+
+falsepositives:
+  - Rare legitimate admin scripts
+  - Some enterprise deployment tools
+
+level: high

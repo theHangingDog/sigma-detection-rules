@@ -1,0 +1,17 @@
+title: Suspicious Execution Via LNK
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e3
+status: experimental
+description: Detects Windows Explorer spawning cmd.exe or powershell.exe, which is indicative of a malicious LNK file execution or manual script execution by a user.
+author: Arkaprava Goswami
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith:
+      - '\explorer.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+  condition: selection
+level: medium

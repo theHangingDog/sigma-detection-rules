@@ -1,0 +1,73 @@
+title: PowerShell Download and Payload Execution
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e4
+status: experimental
+description: Detects PowerShell download activity and subsequent payload execution, simulating phishing attack chains
+author: Arkaprava Goswami
+references:
+  - https://attack.mitre.org/techniques/T1105/
+  - https://attack.mitre.org/techniques/T1059/001/
+tags:
+  - attack.defense_evasion
+  - attack.initial_access
+  - attack.t1059.001
+  - attack.t1105
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  download_activity_powershell:
+    EventID: 1
+    ParentImage|endswith: '\powershell.exe'
+    Image|endswith:
+      - '\powershell.exe'
+      - '\cmd.exe'
+    CommandLine|contains|any:
+      - 'http://'
+      - 'https://'
+      - 'DownloadString'
+      - 'DownloadFile'
+      - 'WebClient'
+      - 'Invoke-WebRequest'
+      - 'curl'
+      - 'wget'
+  payload_execution:
+    EventID: 1
+    ParentImage|endswith: '\powershell.exe'
+    Image|endswith:
+      - '\calc.exe'
+      - '\notepad.exe'
+      - '\cmd.exe'
+      - '\powershell.exe'
+    CommandLine|contains|any:
+      - 'Start-Process'
+      - 'calc'
+      - 'notepad'
+      - 'whoami'
+      - 'ipconfig'
+      - 'systeminfo'
+  temp_file_creation:
+    EventID: 11
+    TargetFilename|contains: '\Temp\'
+    Image|endswith:
+      - '\wscript.exe'
+      - '\powershell.exe'
+  network_connection:
+    EventID: 3
+    Image|endswith:
+      - '\wscript.exe'
+      - '\powershell.exe'
+    DestinationPort:
+      - 80
+      - 443
+      - 8080
+      - 8443
+    Initiated: 'true'
+  condition: (download_activity_powershell and payload_execution) or (temp_file_creation and network_connection)
+  timeframe: 5m
+falsepositives:
+  - System administration scripts
+  - Software deployment tools
+  - Legitimate automation workflows
+  - IT management utilities
+level: high

@@ -1,0 +1,32 @@
+title: Suspicious hh.exe Command Line Arguments
+id: e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e9
+status: experimental
+description: |
+  Detects suspicious command line arguments passed to hh.exe. Malicious CHM files
+  often use unusual arguments or file paths that differ from normal help file usage.
+author: Arkaprava Goswami
+tags:
+  - attack.defense_evasion
+  - attack.t1218.001
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  selection:
+    ParentImage|endswith: '\hh.exe'
+    CommandLine|contains:
+      - 'http://'
+      - 'https://'
+      - 'ftp://'
+      - '.js'
+      - '.vbs'
+      - 'javascript:'
+      - 'vbscript:'
+      - 'ms-msdt:'
+      - 'search-ms:'
+  condition: selection
+falsepositives:
+  - Help files with web links
+  - Documentation with URI schemes
+level: low

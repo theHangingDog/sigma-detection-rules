@@ -1,0 +1,27 @@
+title: Office Application Spawning Suspicious Child Processes
+id:  e3b0c442-98fc-4c7a-a3a5-b5c5b5d5b5e5
+status: experimental
+description: Detects when Office applications spawn suspicious child processes like cmd.exe, powershell.exe, or calc.exe
+author: Arkaprava Goswami
+date: 2024/01/20
+references:
+  - https://attack.mitre.org/techniques/T1204/002/
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith:
+      - '\winword.exe'
+      - '\excel.exe'
+      - '\powerpnt.exe'
+      - '\msaccess.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\calc.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+  condition: selection
+level: high
